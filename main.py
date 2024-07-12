@@ -111,18 +111,40 @@ async def web_app(message: types.Message):
 
 @dp.message_handler(content_types=types.ContentType.PHOTO)
 async def handle_photo(message: types.Message):
-    photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии изображения
+    if message.reply_to_message is not None:
+        ADMIN_CHAT_ID = "-4244628531"
 
-    user_id = message.from_user.id
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
 
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(types.KeyboardButton("открыть форму запроса",
-                                    web_app=WebAppInfo(
-                                        url=f"https://perevyazko1.github.io/bot-acc-front#{user_id}/{photo_id}")))
-    sent_message = await message.answer(f'Отлично! Теперь нажми кнопку для заполнения формы 👇',
-                                        reply_markup=markup)
-    await asyncio.sleep(10)
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+        admin_message = message.caption
+        if match is None:
+            photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+            await bot.send_photo(chat_id=ADMIN_CHAT_ID, photo=photo_id,
+                                 caption=f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+        elif match:
+            photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+            await bot.send_photo(chat_id=match.group(1), photo=photo_id,
+                                 caption=f"Ответ от администратора :\n{admin_message}")
+    elif message.reply_to_message and message.reply_to_message.text is None:
+        current_message = message.reply_to_message.message_id
+        cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+        result = cur.fetchone()
+        admin_message = message.text
+        # Отправляем ответ пользователю
+        if result:
+            user_id = result[0]
+            await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+    elif message.reply_to_message is None:
+        photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии изображения
+        user_id = message.from_user.id
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        markup.add(types.KeyboardButton("открыть форму запроса",
+                                        web_app=WebAppInfo(
+                                            url=f"https://perevyazko1.github.io/bot-acc-front#{user_id}/{photo_id}")))
+        sent_message = await message.answer(f'Отлично! Теперь нажми кнопку для заполнения формы 👇',
+                                            reply_markup=markup)
+        await asyncio.sleep(10)
+        await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
     # Отправляем подтверждение пользователю
 
@@ -131,29 +153,21 @@ async def handle_photo(message: types.Message):
 
 @dp.message_handler(content_types=types.ContentType.VIDEO)
 async def handle_video(message: types.Message):
-    if message.reply_to_message and message.reply_to_message.text is not None:
+    if message.reply_to_message is not None:
         ADMIN_CHAT_ID = "-4244628531"
 
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
-        print("test",message)
 
         admin_message = message.caption
         if match is None:
             video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
-            print(video_id)
-
-            user_id = message.from_user.id
-
             await bot.send_video(chat_id=ADMIN_CHAT_ID, video=video_id,
                                  caption=f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
-
         elif match:
             video_id = message.video.file_id
             await bot.send_video(chat_id=match.group(1), video=video_id,
                                  caption=f"Ответ от администратора :\n{admin_message}")
-
     elif message.reply_to_message and message.reply_to_message.text is None:
-
         current_message = message.reply_to_message.message_id
         cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
         result = cur.fetchone()
@@ -169,7 +183,7 @@ async def handle_video(message: types.Message):
 
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def reply_to_user(message: types.Message):
-    print("test",message)
+    # print("test",message)
     if message.reply_to_message and message.reply_to_message.text is not None:
         ADMIN_CHAT_ID = "-4244628531"
 
@@ -178,6 +192,7 @@ async def reply_to_user(message: types.Message):
 
         admin_message = message.text
         if match is None:
+            print("tewst1")
 
             await bot.send_message(ADMIN_CHAT_ID,
                                    f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
@@ -190,23 +205,34 @@ async def reply_to_user(message: types.Message):
         ADMIN_CHAT_ID = "-4244628531"
 
         if match is None:
-            await bot.send_message(ADMIN_CHAT_ID,
-                                   f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+            # await bot.send_message(ADMIN_CHAT_ID,
+            #                        f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+            print("tewst2")
+            current_message = message.reply_to_message.message_id
+            cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+            result = cur.fetchone()
+            admin_message = message.text
+            # Отправляем ответ пользователю
+            if result:
+                user_id = result[0]
+                await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+
+
         elif match:
             await bot.send_message(match.group(1), f"Ответ от администратора :\n{admin_message}")
 
 
 
     elif message.reply_to_message and message.reply_to_message.text is None:
-        current_message = message.reply_to_message.message_id
-        cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
-        result = cur.fetchone()
-        admin_message = message.text
-        print(message.reply_to_message.text)
-        # Отправляем ответ пользователю
-        if result:
-            user_id = result[0]
-            await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+        pass
+        # current_message = message.reply_to_message.message_id
+        # cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+        # result = cur.fetchone()
+        # admin_message = message.text
+        # # Отправляем ответ пользователю
+        # if result:
+        #     user_id = result[0]
+        #     await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
     elif message.reply_to_message is None:
         await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
 
