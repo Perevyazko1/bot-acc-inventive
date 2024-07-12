@@ -179,6 +179,8 @@ async def reply_to_user(message: types.Message):
             # print(message.forward_from)
             # await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
             # print(test, "test")
+    elif message.reply_to_message is None:
+        await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
 
 
 
