@@ -124,7 +124,7 @@ async def handle_photo(message: types.Message):
         elif match:
             photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
             await bot.send_photo(chat_id=match.group(1), photo=photo_id,
-                                 caption=f"Ответ от администратора :\n{admin_message}")
+                                 caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
     elif message.reply_to_message and message.reply_to_message.text is None:
         current_message = message.reply_to_message.message_id
         cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
@@ -133,7 +133,7 @@ async def handle_photo(message: types.Message):
         # Отправляем ответ пользователю
         if result:
             user_id = result[0]
-            await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+            await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
     elif message.reply_to_message is None:
         photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии изображения
         user_id = message.from_user.id
@@ -166,7 +166,7 @@ async def handle_video(message: types.Message):
         elif match:
             video_id = message.video.file_id
             await bot.send_video(chat_id=match.group(1), video=video_id,
-                                 caption=f"Ответ от администратора :\n{admin_message}")
+                                 caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
     elif message.reply_to_message and message.reply_to_message.text is None:
         current_message = message.reply_to_message.message_id
         cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
@@ -176,7 +176,7 @@ async def handle_video(message: types.Message):
         # Отправляем ответ пользователю
         if result:
             user_id = result[0]
-            await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+            await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
     elif message.reply_to_message is None:
         await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
 
@@ -197,7 +197,7 @@ async def reply_to_user(message: types.Message):
             await bot.send_message(ADMIN_CHAT_ID,
                                    f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
         elif match:
-            await bot.send_message(match.group(1), f"Ответ от администратора :\n{admin_message}")
+            await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
 
     elif message.reply_to_message.caption is not None:
         match = re.search(r'id\((\d+)\)', message.reply_to_message.caption)
@@ -207,19 +207,19 @@ async def reply_to_user(message: types.Message):
         if match is None:
             # await bot.send_message(ADMIN_CHAT_ID,
             #                        f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
-            print("tewst2")
             current_message = message.reply_to_message.message_id
             cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
             result = cur.fetchone()
             admin_message = message.text
+            print(message)
             # Отправляем ответ пользователю
             if result:
                 user_id = result[0]
-                await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+                await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
 
 
         elif match:
-            await bot.send_message(match.group(1), f"Ответ от администратора :\n{admin_message}")
+            await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
 
 
 
