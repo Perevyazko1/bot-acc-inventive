@@ -5,20 +5,22 @@ from aiogram.dispatcher.filters.state import State, StatesGroup
 import json
 import asyncio
 
-from aiogram.types import ReplyKeyboardRemove
+from aiogram.types import ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types.web_app_info import WebAppInfo
 from dotenv import load_dotenv
 import os
 from aiogram import types
 from aiogram import executor
 import sqlite3 as sq
+import re
 
 load_dotenv()
 bot = Bot(token=os.getenv('TOKEN_BOT'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 # ADMIN_CHAT_ID = "5521511837"
-ADMIN_CHAT_ID = "674501380"
+# ADMIN_CHAT_ID = "674501380"
+ADMIN_CHAT_ID = "-4244628531"
 
 base = sq.connect('data.db')
 cur = base.cursor()
@@ -38,8 +40,9 @@ async def start(message: types.Message):
                          reply_markup=markup)
 
 
+
 @dp.message_handler(commands="registration_admin")
-async def start(message: types.Message):
+async def registration_admin(message: types.Message):
     restore = types.InlineKeyboardButton("restore", callback_data=f"restore")
     xiaomi = types.InlineKeyboardButton("xiaomi", callback_data=f"xiaomi")
     samsung = types.InlineKeyboardButton("samsung", callback_data=f"samsung")
@@ -79,7 +82,9 @@ async def send_form(message: types.Message):
 async def web_app(message: types.Message):
     data_form = json.loads(message.web_app_data.data)
     print(data_form)
-    send_form_text = (f"Бренд: {data_form['brand']} \n\n"
+
+    send_form_text = (
+                      f"Бренд: {data_form['brand']} \n\n"
                       f"Имя сотрудника  {data_form['name']} \n\n"
                       f"Магазин: {data_form['store']} \n\n"
                       f"Ссылка на товар : {data_form['reference']}\n\n"
@@ -91,14 +96,18 @@ async def web_app(message: types.Message):
         user_id = data_form['user_id']
         photo_id = data_form['photo']
         message = await bot.send_photo(chat_id=ADMIN_CHAT_ID, photo=data_form['photo'], caption=send_form_text)
-
-        cur.execute("INSERT INTO files (message_id, user_id, photo_id) VALUES (?, ?, ?)", (message.message_id, user_id, photo_id))
+        cur.execute("INSERT INTO files (message_id, user_id, photo_id) VALUES (?, ?, ?)",
+                    (message.message_id, user_id, photo_id))
         base.commit()
+
+        sent_message = await bot.send_message(chat_id=user_id, text="Форма успешно отправлена в случае необходимости с тобой свяжутся")
+        # await asyncio.sleep(10)
+        # await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+
+
     else:
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=send_form_text)
-    sent_message = await message.answer("Форма успешно отправлена в случае необходимости с тобой свяжутся")
-    await asyncio.sleep(10)
-    await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+
 
 
 @dp.message_handler(content_types=types.ContentType.PHOTO)
@@ -123,25 +132,57 @@ async def handle_photo(message: types.Message):
 
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def reply_to_user(message: types.Message):
-    if message.reply_to_message:
+    # print("сообщение",message)
+    reply_user_id = message.from_user.id
+    # print(reply_user_id)
+    print()
+    if message.reply_to_message and message.reply_to_message.text is not None:
+        # await message.reply("Пожалуйста, ответьте на сообщение пользователя.")
+        ADMIN_CHAT_ID = "-4244628531"
+
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+        print("test", match, message.reply_to_message.text, message)
+
+        admin_message = message.text
+        if match is None:
+
+            await bot.send_message(ADMIN_CHAT_ID,
+                                   f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+
+            # await bot.send_message(ADMIN_CHAT_ID, f"Ответ от {message.from_user.first_name}:\n{admin_message}")
+        elif match:
+            await bot.send_message(match.group(1), f"Ответ от администратора :\n{admin_message}")
+
+    elif message.reply_to_message and message.reply_to_message.text is None:
 
         # Получаем ID пользователя из текста оригинального сообщения
-        print(message.reply_to_message.message_id)
+        # print(message.reply_to_message.message_id)
         # photo = message.reply_to_message.photo[3]
 
         # photo_id = photo['file_unique_id']
         current_message = message.reply_to_message.message_id
         cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
         result = cur.fetchone()
-        user_id = result[0]
-        print(user_id)
+
         #
         admin_message = message.text
+        ADMIN_CHAT_ID = "-4234194222"
+        ADMIN_ID = "674501380"
+        print(message.reply_to_message.text)
+        # print(message.reply_to_message.text)
 
         # Отправляем ответ пользователю
-        await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
-    else:
-        await message.reply("Пожалуйста, ответьте на сообщение пользователя.")
+        if result:
+            user_id = result[0]
+            await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+
+            # print(message.forward_from)
+            # await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+            # print(test, "test")
+
+
+
+
 
 
 #
