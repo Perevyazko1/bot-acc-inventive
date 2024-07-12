@@ -40,7 +40,6 @@ async def start(message: types.Message):
                          reply_markup=markup)
 
 
-
 @dp.message_handler(commands="registration_admin")
 async def registration_admin(message: types.Message):
     restore = types.InlineKeyboardButton("restore", callback_data=f"restore")
@@ -84,11 +83,11 @@ async def web_app(message: types.Message):
     print(data_form)
 
     send_form_text = (
-                      f"Бренд: {data_form['brand']} \n\n"
-                      f"Имя сотрудника  {data_form['name']} \n\n"
-                      f"Магазин: {data_form['store']} \n\n"
-                      f"Ссылка на товар : {data_form['reference']}\n\n"
-                      f"О товаре:\n\n {data_form['about']} ")
+        f"Бренд: {data_form['brand']} \n\n"
+        f"Имя сотрудника  {data_form['name']} \n\n"
+        f"Магазин: {data_form['store']} \n\n"
+        f"Ссылка на товар : {data_form['reference']}\n\n"
+        f"О товаре:\n\n {data_form['about']} ")
     # Пересылаем изображение админу
     # await bot.send_photo(chat_id=ADMIN_CHAT_ID, photo=data_form['photo'], caption=send_form_text)
 
@@ -100,14 +99,14 @@ async def web_app(message: types.Message):
                     (message.message_id, user_id, photo_id))
         base.commit()
 
-        sent_message = await bot.send_message(chat_id=user_id, text="Форма успешно отправлена в случае необходимости с тобой свяжутся")
+        sent_message = await bot.send_message(chat_id=user_id,
+                                              text="Форма успешно отправлена в случае необходимости с тобой свяжутся")
         # await asyncio.sleep(10)
         # await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
 
     else:
         await bot.send_message(chat_id=ADMIN_CHAT_ID, text=send_form_text)
-
 
 
 @dp.message_handler(content_types=types.ContentType.PHOTO)
@@ -130,61 +129,86 @@ async def handle_photo(message: types.Message):
     # Здесь можно добавить логику для обработки открытия формы
 
 
-@dp.message_handler(content_types=types.ContentTypes.TEXT)
-async def reply_to_user(message: types.Message):
-    # print("сообщение",message)
-    reply_user_id = message.from_user.id
-    # print(reply_user_id)
-    print()
+@dp.message_handler(content_types=types.ContentType.VIDEO)
+async def handle_video(message: types.Message):
     if message.reply_to_message and message.reply_to_message.text is not None:
-        # await message.reply("Пожалуйста, ответьте на сообщение пользователя.")
         ADMIN_CHAT_ID = "-4244628531"
 
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
-        print("test", match, message.reply_to_message.text, message)
+        print("test",message)
+
+        admin_message = message.caption
+        if match is None:
+            video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
+            print(video_id)
+
+            user_id = message.from_user.id
+
+            await bot.send_video(chat_id=ADMIN_CHAT_ID, video=video_id,
+                                 caption=f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+
+        elif match:
+            video_id = message.video.file_id
+            await bot.send_video(chat_id=match.group(1), video=video_id,
+                                 caption=f"Ответ от администратора :\n{admin_message}")
+
+    elif message.reply_to_message and message.reply_to_message.text is None:
+
+        current_message = message.reply_to_message.message_id
+        cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+        result = cur.fetchone()
+        admin_message = message.text
+        print(message.reply_to_message.text)
+        # Отправляем ответ пользователю
+        if result:
+            user_id = result[0]
+            await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
+    elif message.reply_to_message is None:
+        await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
+
+
+@dp.message_handler(content_types=types.ContentTypes.TEXT)
+async def reply_to_user(message: types.Message):
+    print("test",message)
+    if message.reply_to_message and message.reply_to_message.text is not None:
+        ADMIN_CHAT_ID = "-4244628531"
+
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+        # print("test", match, message.reply_to_message.text, message)
 
         admin_message = message.text
         if match is None:
 
             await bot.send_message(ADMIN_CHAT_ID,
                                    f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
-
-            # await bot.send_message(ADMIN_CHAT_ID, f"Ответ от {message.from_user.first_name}:\n{admin_message}")
         elif match:
             await bot.send_message(match.group(1), f"Ответ от администратора :\n{admin_message}")
 
+    elif message.reply_to_message.caption is not None:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.caption)
+        admin_message = message.text
+        ADMIN_CHAT_ID = "-4244628531"
+
+        if match is None:
+            await bot.send_message(ADMIN_CHAT_ID,
+                                   f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+        elif match:
+            await bot.send_message(match.group(1), f"Ответ от администратора :\n{admin_message}")
+
+
+
     elif message.reply_to_message and message.reply_to_message.text is None:
-
-        # Получаем ID пользователя из текста оригинального сообщения
-        # print(message.reply_to_message.message_id)
-        # photo = message.reply_to_message.photo[3]
-
-        # photo_id = photo['file_unique_id']
         current_message = message.reply_to_message.message_id
         cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
         result = cur.fetchone()
-
-        #
         admin_message = message.text
-        ADMIN_CHAT_ID = "-4234194222"
-        ADMIN_ID = "674501380"
         print(message.reply_to_message.text)
-        # print(message.reply_to_message.text)
-
         # Отправляем ответ пользователю
         if result:
             user_id = result[0]
             await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
-
-            # print(message.forward_from)
-            # await bot.send_message(user_id, f"Ответ от администратора:\n{admin_message}")
-            # print(test, "test")
     elif message.reply_to_message is None:
         await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
-
-
-
-
 
 
 #
