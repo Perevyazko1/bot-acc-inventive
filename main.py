@@ -156,7 +156,17 @@ async def reply_to_user(message: types.Message):
             await bot.send_photo(chat_id=match.group(1), photo=photo_id,
                                  caption=f"Фото от администратора: {message.chat.title}\n{admin_message}")
         else:
-            await message.answer("Сообщение не доставлено.")
+            current_message = message.reply_to_message.message_id
+            cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+            result = cur.fetchone()
+            admin_message = message.text
+            # Отправляем ответ пользователю
+            if result:
+                user_id = result[0]
+                await bot.send_photo(chat_id=user_id, photo=photo_id,
+                                     caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
+            elif result is None:
+                await message.answer("Сообщение не доставлено.")
 
 
 # -------------Пересылка фото менеджерам--------------
@@ -262,7 +272,17 @@ async def reply_to_user(message: types.Message):
             await bot.send_video(chat_id=match.group(1), video=video_id,
                                  caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
         else:
-            await message.answer("Сообщение не доставлено.")
+            current_message = message.reply_to_message.message_id
+            cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+            result = cur.fetchone()
+            admin_message = message.text
+            # Отправляем ответ пользователю
+            if result:
+                user_id = result[0]
+                await bot.send_video(chat_id=user_id, video=video_id,
+                                     caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
+            elif result is None:
+                await message.answer("Сообщение не доставлено.")
 
 
 # -------------Пересылка видео менеджерам--------------
