@@ -306,16 +306,26 @@ async def message_in_chat_admins(message: types.Message):
 
 
 # -------------Пересылка сообщений продавцу--------------
-@dp.message_handler(content_types=types.ContentTypes.TEXT,
+@dp.message_handler(content_types=types.ContentTypes.TEXT,is_reply=True,
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
-    match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
-    admin_message = message.text
-    if match:
-        await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
-    else:
-        await message.answer("Сообщение не доставлено.")
+    if message.reply_to_message.text:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+        admin_message = message.text
+        if match:
+            await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+        else:
+            await message.answer("Сообщение не доставлено.")
+    # проверка, что это не сообщение а фото или видео
+    elif message.reply_to_message.caption:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.caption)
+        admin_message = message.text
+        if match:
+            await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+        else:
+            await message.answer("Сообщение не доставлено.")
+
 
 
 # -------------Пересылка сообщений менеджерам--------------
