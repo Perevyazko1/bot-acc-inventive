@@ -123,6 +123,14 @@ async def web_app(message: types.Message):
         await bot.send_message(chat_id=data_form['chat_group_id'], text=send_form_text)
 
 
+# -------------Защита от свободных фото в чате, так как они никому не придут--------------
+@dp.message_handler(content_types=types.ContentTypes.PHOTO, is_reply=False,
+                    chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
+                    )
+async def photo_in_chat_admins(message: types.Message):
+    await message.answer("Чтобы выслать фото, нужно ответить на его сообщение")
+
+
 @dp.message_handler(content_types=types.ContentType.PHOTO)
 async def handle_photo(message: types.Message):
     if message.reply_to_message is not None:
@@ -168,36 +176,44 @@ async def handle_photo(message: types.Message):
     # Здесь можно добавить логику для обработки открытия формы
 
 
-@dp.message_handler(content_types=types.ContentType.VIDEO)
-async def handle_video(message: types.Message):
-    if message.reply_to_message is not None:
+# -------------Защита от свободных видео в чате, так как они никому не придут--------------
+@dp.message_handler(content_types=types.ContentTypes.VIDEO, is_reply=False,
+                    chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
+                    )
+async def video_in_chat_admins(message: types.Message):
+    await message.answer("Чтобы выслать видео, нужно ответить на его сообщение")
 
-        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
 
-        admin_message = message.caption
-        if match is None:
-            video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
-            match = re.search(r"(xiaomi|samsung|restore)", message.reply_to_message.text)
-            brand = match.group(1)
-            id_chat = BRANDS.get(brand)
-
-            await bot.send_video(chat_id=id_chat, video=video_id,
-                                 caption=f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
-        elif match:
-            video_id = message.video.file_id
-            await bot.send_video(chat_id=match.group(1), video=video_id,
-                                 caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
-    elif message.reply_to_message and message.reply_to_message.text is None:
-        current_message = message.reply_to_message.message_id
-        cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
-        result = cur.fetchone()
-        admin_message = message.text
-        # Отправляем ответ пользователю
-        if result:
-            user_id = result[0]
-            await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
-    elif message.reply_to_message is None:
-        await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
+# @dp.message_handler(content_types=types.ContentType.VIDEO)
+# async def handle_video(message: types.Message):
+#     if message.reply_to_message is not None:
+#
+#         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+#
+#         admin_message = message.caption
+#         if match is None:
+#             video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
+#             match = re.search(r"(xiaomi|samsung|restore)", message.reply_to_message.text)
+#             brand = match.group(1)
+#             id_chat = BRANDS.get(brand)
+#
+#             await bot.send_video(chat_id=id_chat, video=video_id,
+#                                  caption=f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+#         elif match:
+#             video_id = message.video.file_id
+#             await bot.send_video(chat_id=match.group(1), video=video_id,
+#                                  caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+#     elif message.reply_to_message and message.reply_to_message.text is None:
+#         current_message = message.reply_to_message.message_id
+#         cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+#         result = cur.fetchone()
+#         admin_message = message.text
+#         # Отправляем ответ пользователю
+#         if result:
+#             user_id = result[0]
+#             await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+#     elif message.reply_to_message is None:
+#         await message.answer("Для отправки сообщения, нужно выбрать кому ответить")
 
 
 # -------------Защита от свободных сообщений в чате, так как они никому не придут--------------
