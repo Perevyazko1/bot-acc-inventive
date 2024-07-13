@@ -341,7 +341,16 @@ async def reply_to_user(message: types.Message):
         if match:
             await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
         else:
-            await message.answer("Сообщение не доставлено.")
+            current_message = message.reply_to_message.message_id
+            cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+            result = cur.fetchone()
+            admin_message = message.text
+            # Отправляем ответ пользователю
+            if result:
+                user_id = result[0]
+                await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+            elif result is None:
+                await message.answer("Сообщение не доставлено.")
 
 
 # -------------Пересылка сообщений менеджерам--------------
