@@ -139,6 +139,10 @@ async def photo_in_chat_admins(message: types.Message):
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
+    if message.from_user.id == message.reply_to_message.from_user.id:
+        await message.answer("Вы ответили на свое сообщение, чтобы отправить ответ, нужно ответить на сообщение "
+                             "пользователя")
+
     if message.reply_to_message.text:
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
         admin_message = message.text
@@ -255,6 +259,10 @@ async def video_in_chat_admins(message: types.Message):
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
+    if message.from_user.id == message.reply_to_message.from_user.id:
+        await message.answer("Вы ответили на свое сообщение, чтобы отправить ответ, нужно ответить на сообщение "
+                             "пользователя")
+
     if message.reply_to_message.text:
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
         admin_message = message.text
@@ -347,6 +355,10 @@ async def message_in_chat_admins(message: types.Message):
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
+    if message.from_user.id == message.reply_to_message.from_user.id:
+        await message.answer("Вы ответили на свое сообщение, чтобы отправить ответ, нужно ответить на сообщение "
+                             "пользователя")
+
     if message.reply_to_message.text:
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
         admin_message = message.text
