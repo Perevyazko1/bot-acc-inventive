@@ -86,6 +86,9 @@ async def process_callback(callback_query: types.CallbackQuery):
 
 @dp.message_handler(commands="send_form")
 async def send_form(message: types.Message):
+    user_id = message.from_user.id
+    cur.execute("DELETE  FROM curent_chat WHERE user_id = ?", (user_id,))
+    base.commit()
     await message.answer("Отправь фото или скрин товара.")
 
 
@@ -131,35 +134,37 @@ async def photo_in_chat_admins(message: types.Message):
     await message.answer("Чтобы выслать фото, нужно ответить на его сообщение")
 
 
-@dp.message_handler(content_types=types.ContentType.PHOTO)
-async def handle_photo(message: types.Message):
-    if message.reply_to_message is not None:
+# -------------Пересылка фото продавцу--------------
+@dp.message_handler(content_types=types.ContentTypes.PHOTO, is_reply=True,
+                    chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
+                    )
+async def reply_to_user(message: types.Message):
+    match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+    admin_message = message.text
+    photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+    if match:
+        await bot.send_photo(chat_id=match.group(1), photo=photo_id,
+                             caption=f"Фото от администратора: {message.chat.title}\n{admin_message}")
+    else:
+        await message.answer("Сообщение не доставлено.")
 
-        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
 
-        admin_message = message.caption
-        if match is None:
-            match = re.search(r"(xiaomi|samsung|restore)", message.reply_to_message.text)
-            brand = match.group(1)
-            id_chat = BRANDS.get(brand)
+# -------------Пересылка фото менеджерам--------------
+@dp.message_handler(content_types=types.ContentTypes.PHOTO)
+async def reply_to_manager(message: types.Message):
+    user_id = message.from_user.id
+    cur.execute("SELECT chat FROM curent_chat WHERE user_id = ?", (user_id,))
+    result = cur.fetchone()
 
-            photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
-            await bot.send_photo(chat_id=id_chat, photo=photo_id,
-                                 caption=f"Ответ от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
-        elif match:
-            photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
-            await bot.send_photo(chat_id=match.group(1), photo=photo_id,
-                                 caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
-    elif message.reply_to_message and message.reply_to_message.text is None:
-        current_message = message.reply_to_message.message_id
-        cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
-        result = cur.fetchone()
-        admin_message = message.text
-        # Отправляем ответ пользователю
-        if result:
-            user_id = result[0]
-            await bot.send_message(user_id, f"Ответ от администратора: {message.chat.title}\n{admin_message}")
-    elif message.reply_to_message is None:
+
+
+    user_message = message.text
+    if result:
+        current_chat = result[0]
+        photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+        await bot.send_photo(chat_id=current_chat, photo=photo_id,
+                             caption=f"Фото от id({message.from_user.id}) {message.from_user.first_name}:\n{user_message}")
+    elif result is None:
         photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии изображения
         user_id = message.from_user.id
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -171,9 +176,53 @@ async def handle_photo(message: types.Message):
         await asyncio.sleep(10)
         await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
-    # Отправляем подтверждение пользователю
+    else:
+        await message.answer("Чтобы общаться с админом, нужно сначала выслать карточку товара.")
 
-    # Здесь можно добавить логику для обработки открытия формы
+
+# @dp.message_handler(content_types=types.ContentType.PHOTO)
+# async def handle_photo(message: types.Message):
+# if message.reply_to_message is not None:
+#
+#     match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+#
+#     admin_message = message.caption
+#     if match is None:
+#         match = re.search(r"(xiaomi|samsung|restore)", message.reply_to_message.text)
+#         brand = match.group(1)
+#         id_chat = BRANDS.get(brand)
+#
+#         photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+#         await bot.send_photo(chat_id=id_chat, photo=photo_id,
+#                              caption=f"Фото от id({message.from_user.id}) {message.from_user.first_name}:\n{admin_message}")
+#     elif match:
+#         photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+#         await bot.send_photo(chat_id=match.group(1), photo=photo_id,
+#                              caption=f"Фото от администратора: {message.chat.title}\n{admin_message}")
+# if message.reply_to_message.text is None:
+#     current_message = message.reply_to_message.message_id
+#     cur.execute("SELECT user_id FROM files WHERE message_id = ?", (current_message,))
+#     result = cur.fetchone()
+#     admin_message = message.text
+#     # Отправляем ответ пользователю
+#     if result:
+#         user_id = result[0]
+#         await bot.send_message(user_id, f"Фото от администратора: {message.chat.title}\n{admin_message}")
+# elif message.reply_to_message is None:
+#     photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии изображения
+#     user_id = message.from_user.id
+#     markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+#     markup.add(types.KeyboardButton("открыть форму запроса",
+#                                     web_app=WebAppInfo(
+#                                         url=f"https://perevyazko1.github.io/bot-acc-front#{user_id}/{photo_id}")))
+#     sent_message = await message.answer(f'Отлично! Теперь нажми кнопку для заполнения формы 👇',
+#                                         reply_markup=markup)
+#     await asyncio.sleep(10)
+#     await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+
+# Отправляем подтверждение пользователю
+
+# Здесь можно добавить логику для обработки открытия формы
 
 
 # -------------Защита от свободных видео в чате, так как они никому не придут--------------
@@ -185,7 +234,7 @@ async def video_in_chat_admins(message: types.Message):
 
 
 # -------------Пересылка видео продавцу--------------
-@dp.message_handler(content_types=types.ContentTypes.VIDEO,
+@dp.message_handler(content_types=types.ContentTypes.VIDEO, is_reply=True,
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
@@ -194,7 +243,7 @@ async def reply_to_user(message: types.Message):
     video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
     if match:
         await bot.send_video(chat_id=match.group(1), video=video_id,
-                             caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+                             caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
     else:
         await message.answer("Сообщение не доставлено.")
 
@@ -211,7 +260,7 @@ async def reply_to_manager(message: types.Message):
         current_chat = result[0]
         video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
         await bot.send_video(chat_id=current_chat, video=video_id,
-                             caption=f"Сообщение от id({message.from_user.id}) {message.from_user.first_name}:\n{user_message}")
+                             caption=f"Видео от id({message.from_user.id}) {message.from_user.first_name}:\n{user_message}")
     else:
         await message.answer("Чтобы общаться с админом, нужно сначала выслать карточку товара.")
 
