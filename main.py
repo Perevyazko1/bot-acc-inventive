@@ -184,6 +184,38 @@ async def video_in_chat_admins(message: types.Message):
     await message.answer("Чтобы выслать видео, нужно ответить на его сообщение")
 
 
+# -------------Пересылка видео продавцу--------------
+@dp.message_handler(content_types=types.ContentTypes.VIDEO,
+                    chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
+                    )
+async def reply_to_user(message: types.Message):
+    match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+    admin_message = message.text
+    video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
+    if match:
+        await bot.send_video(chat_id=match.group(1), video=video_id,
+                             caption=f"Ответ от администратора: {message.chat.title}\n{admin_message}")
+    else:
+        await message.answer("Сообщение не доставлено.")
+
+
+# -------------Пересылка видео менеджерам--------------
+@dp.message_handler(content_types=types.ContentTypes.VIDEO)
+async def reply_to_manager(message: types.Message):
+    user_id = message.from_user.id
+    cur.execute("SELECT chat FROM curent_chat WHERE user_id = ?", (user_id,))
+    result = cur.fetchone()
+
+    user_message = message.text
+    if result:
+        current_chat = result[0]
+        video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
+        await bot.send_video(chat_id=current_chat, video=video_id,
+                             caption=f"Сообщение от id({message.from_user.id}) {message.from_user.first_name}:\n{user_message}")
+    else:
+        await message.answer("Чтобы общаться с админом, нужно сначала выслать карточку товара.")
+
+
 # @dp.message_handler(content_types=types.ContentType.VIDEO)
 # async def handle_video(message: types.Message):
 #     if message.reply_to_message is not None:
