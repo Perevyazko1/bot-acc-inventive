@@ -139,14 +139,24 @@ async def photo_in_chat_admins(message: types.Message):
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
-    match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
-    admin_message = message.text
-    photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
-    if match:
-        await bot.send_photo(chat_id=match.group(1), photo=photo_id,
-                             caption=f"Фото от администратора: {message.chat.title}\n{admin_message}")
-    else:
-        await message.answer("Сообщение не доставлено.")
+    if message.reply_to_message.text:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+        admin_message = message.text
+        photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+        if match:
+            await bot.send_photo(chat_id=match.group(1), photo=photo_id,
+                                 caption=f"Фото от администратора: {message.chat.title}\n{admin_message}")
+        else:
+            await message.answer("Сообщение не доставлено.")
+    elif message.reply_to_message.caption:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.caption)
+        admin_message = message.text
+        photo_id = message.photo[-1].file_id  # Получаем file_id самой крупной версии фото
+        if match:
+            await bot.send_photo(chat_id=match.group(1), photo=photo_id,
+                                 caption=f"Фото от администратора: {message.chat.title}\n{admin_message}")
+        else:
+            await message.answer("Сообщение не доставлено.")
 
 
 # -------------Пересылка фото менеджерам--------------
@@ -155,9 +165,6 @@ async def reply_to_manager(message: types.Message):
     user_id = message.from_user.id
     cur.execute("SELECT chat FROM curent_chat WHERE user_id = ?", (user_id,))
     result = cur.fetchone()
-
-
-
     user_message = message.text
     if result:
         current_chat = result[0]
@@ -238,14 +245,24 @@ async def video_in_chat_admins(message: types.Message):
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
-    match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
-    admin_message = message.text
-    video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
-    if match:
-        await bot.send_video(chat_id=match.group(1), video=video_id,
-                             caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
-    else:
-        await message.answer("Сообщение не доставлено.")
+    if message.reply_to_message.text:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
+        admin_message = message.text
+        video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
+        if match:
+            await bot.send_video(chat_id=match.group(1), video=video_id,
+                                 caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
+        else:
+            await message.answer("Сообщение не доставлено.")
+    elif message.reply_to_message.caption:
+        match = re.search(r'id\((\d+)\)', message.reply_to_message.caption)
+        admin_message = message.text
+        video_id = message.video.file_id  # Получаем file_id самой крупной версии видео
+        if match:
+            await bot.send_video(chat_id=match.group(1), video=video_id,
+                                 caption=f"Видео от администратора: {message.chat.title}\n{admin_message}")
+        else:
+            await message.answer("Сообщение не доставлено.")
 
 
 # -------------Пересылка видео менеджерам--------------
@@ -306,7 +323,7 @@ async def message_in_chat_admins(message: types.Message):
 
 
 # -------------Пересылка сообщений продавцу--------------
-@dp.message_handler(content_types=types.ContentTypes.TEXT,is_reply=True,
+@dp.message_handler(content_types=types.ContentTypes.TEXT, is_reply=True,
                     chat_id=[BRANDS.get("xiaomi"), BRANDS.get("samsung"), BRANDS.get("restore")],
                     )
 async def reply_to_user(message: types.Message):
@@ -325,7 +342,6 @@ async def reply_to_user(message: types.Message):
             await bot.send_message(match.group(1), f"Ответ от администратора: {message.chat.title}\n{admin_message}")
         else:
             await message.answer("Сообщение не доставлено.")
-
 
 
 # -------------Пересылка сообщений менеджерам--------------
