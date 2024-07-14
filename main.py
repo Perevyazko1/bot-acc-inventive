@@ -50,14 +50,19 @@ async def start(message: types.Message):
                                         url=f"https://perevyazko1.github.io/bot-acc-front")))
     await message.answer(f'Привет {message.from_user.first_name} для отправки формы нажми на кнопку 👇',
                          reply_markup=markup)
+
+
 @dp.message_handler(commands="info")
 async def start(message: types.Message):
-    await message.answer(f'🤖 Бот ассистент предназначен для предложения добавления новых аксессуаров, в ассортиментную матрицу re:store, xiaomi, samsung.\n\n'
-f'Для отправки карточки, выбери в меню команду "Предложить аксессуар" \n\n'
+    await message.answer(
+        f'🤖 Бот ассистент предназначен для предложения добавления новых аксессуаров, в ассортиментную матрицу re:store, xiaomi, samsung.\n\n'
+        f'Для отправки карточки, выбери в меню команду "Предложить аксессуар" \n\n'
 
-"👤 Создатель: Андрей Перевязко\n\n"
-"📲 TG: @perevyazko1"
-                         )
+        "👤 Создатель: Андрей Перевязко\n\n"
+        "📲 TG: @perevyazko1"
+        )
+
+
 @dp.callback_query_handler(lambda c: c.data in ['restore', 'xiaomi', 'samsung'])
 async def process_callback(callback_query: types.CallbackQuery):
     # Получаем данные из callback_query
@@ -301,7 +306,6 @@ async def reply_to_user(message: types.Message):
 @dp.message_handler(content_types=types.ContentTypes.TEXT)
 async def reply_to_manager(message: types.Message):
     user_id = message.from_user.id
-    print(message.chat.id)
     cur.execute("SELECT chat FROM curent_chat WHERE user_id = ?", (user_id,))
     result = cur.fetchone()
 
