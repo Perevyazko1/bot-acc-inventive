@@ -36,12 +36,7 @@ base.commit()
 
 @dp.message_handler(commands="start")
 async def start(message: types.Message):
-    markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(types.KeyboardButton("открыть форму запроса",
-                                    web_app=WebAppInfo(
-                                        url=f"https://perevyazko1.github.io/bot-acc-front")))
-    await message.answer(f'Привет {message.from_user.first_name} для отправки формы нажми на кнопку 👇',
-                         reply_markup=markup)
+    await message.answer(f'Привет {message.from_user.first_name} для отправки формы открой меню.')
 
 
 @dp.message_handler(commands="info")
