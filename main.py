@@ -18,11 +18,11 @@ dp = Dispatcher(bot, storage=MemoryStorage())
 
 BRANDS = {
     "restore":
-        "-4200438125",
+        os.getenv("RESTORE"),
     "samsung":
-        "-4244628531",
+        os.getenv("SAMSUNG"),
     "xiaomi":
-        "-4211717137"
+        os.getenv("XIAOMI"),
 }
 
 base = sq.connect('data.db')
