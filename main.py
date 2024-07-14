@@ -1,28 +1,20 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters.state import State, StatesGroup
-import json
 import asyncio
+import json
+import os
+import re
+import sqlite3 as sq
 
-from aiogram.types import ReplyKeyboardRemove, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import Bot, Dispatcher
+from aiogram import executor
+from aiogram import types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types.web_app_info import WebAppInfo
 from dotenv import load_dotenv
-import os
-from aiogram import types
-from aiogram import executor
-import sqlite3 as sq
-import re
 
 load_dotenv()
 bot = Bot(token=os.getenv('TOKEN_BOT'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-# ADMIN_CHAT_ID = "5521511837"
-# ADMIN_CHAT_ID = "674501380"
-# ADMIN_CHAT_ID_Samsung = "-4244628531"
-# ADMIN_CHAT_ID_RE_STORE = "-4200438125"
-# ADMIN_CHAT_ID_XIAOMI = "-4211717137"
 
 BRANDS = {
     "restore":
