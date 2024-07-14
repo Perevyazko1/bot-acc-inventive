@@ -50,19 +50,19 @@ async def start(message: types.Message):
         )
 
 
-@dp.callback_query_handler(lambda c: c.data in ['restore', 'xiaomi', 'samsung'])
-async def process_callback(callback_query: types.CallbackQuery):
-    # Получаем данные из callback_query
-    brand = callback_query.data
-    user_id = callback_query.from_user.id
-    cur.execute("INSERT INTO admins (user_id, brand) VALUES (?, ?)", (user_id, brand))
-    base.commit()
-
-    # Отправляем ответ пользователю
-    await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, f"Вы зарегистрированы админом в брэнде: {brand}")
-    await bot.delete_message(chat_id=callback_query.message.chat.id,
-                             message_id=callback_query.message.message_id)
+# @dp.callback_query_handler(lambda c: c.data in ['restore', 'xiaomi', 'samsung'])
+# async def process_callback(callback_query: types.CallbackQuery):
+#     # Получаем данные из callback_query
+#     brand = callback_query.data
+#     user_id = callback_query.from_user.id
+#     cur.execute("INSERT INTO admins (user_id, brand) VALUES (?, ?)", (user_id, brand))
+#     base.commit()
+#
+#     # Отправляем ответ пользователю
+#     await bot.answer_callback_query(callback_query.id)
+#     await bot.send_message(callback_query.from_user.id, f"Вы зарегистрированы админом в брэнде: {brand}")
+#     await bot.delete_message(chat_id=callback_query.message.chat.id,
+#                              message_id=callback_query.message.message_id)
 
 
 @dp.message_handler(commands="send_form")
@@ -124,6 +124,7 @@ async def reply_to_user(message: types.Message):
         await message.answer("Вы ответили на свое сообщение, чтобы отправить ответ, нужно ответить на сообщение "
                              "пользователя")
 
+
     if message.reply_to_message.text:
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
         admin_message = message.text
@@ -175,7 +176,7 @@ async def reply_to_manager(message: types.Message):
                                             url=f"https://perevyazko1.github.io/bot-acc-front#{user_id}/{photo_id}")))
         sent_message = await message.answer(f'Отлично! Теперь нажми кнопку для заполнения формы 👇',
                                             reply_markup=markup)
-        await asyncio.sleep(10)
+        await asyncio.sleep(20)
         await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
     else:
