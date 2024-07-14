@@ -15,7 +15,6 @@ load_dotenv()
 bot = Bot(token=os.getenv('TOKEN_BOT'))
 dp = Dispatcher(bot, storage=MemoryStorage())
 
-
 BRANDS = {
     "restore":
         os.getenv("RESTORE"),
@@ -47,7 +46,7 @@ async def start(message: types.Message):
 
         "👤 Создатель: Андрей Перевязко\n\n"
         "📲 TG: @perevyazko1"
-        )
+    )
     photo_path = 'image.jpg'  # здесь нужно указать путь к вашему изображению в корне проекта
     with open(photo_path, 'rb') as photo:
         await bot.send_photo(message.chat.id, photo)
@@ -127,7 +126,6 @@ async def reply_to_user(message: types.Message):
         await message.answer("Вы ответили на свое сообщение, чтобы отправить ответ, нужно ответить на сообщение "
                              "пользователя")
 
-
     if message.reply_to_message.text:
         match = re.search(r'id\((\d+)\)', message.reply_to_message.text)
         admin_message = message.text
@@ -177,10 +175,32 @@ async def reply_to_manager(message: types.Message):
         markup.add(types.KeyboardButton("открыть форму запроса",
                                         web_app=WebAppInfo(
                                             url=f"https://perevyazko1.github.io/bot-acc-front#{user_id}/{photo_id}")))
-        sent_message = await message.answer(f'Отлично! Теперь нажми кнопку для заполнения формы 👇',
-                                            reply_markup=markup)
-        await asyncio.sleep(20)
+        button_message = await message.answer(f'Отлично! Теперь нажми кнопку для заполнения формы 👇',
+                                              reply_markup=markup)
+
+        initial_text = 'открыть форму запроса (10s)'
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
+        button = types.KeyboardButton(initial_text, web_app=WebAppInfo(
+            url=f"https://perevyazko1.github.io/bot-acc-front#{user_id}/{photo_id}"))
+        markup.add(button)
+
+        sent_message = await message.answer(f'кнопка исчезнет через (60 s)')
+
+        for i in range(29, 0, -1):
+            await asyncio.sleep(1)
+            updated_text = (
+
+                f'Кнопка исчезнет через ({i} s)\n\n'
+                f'после исчезновения кнопки можно заново вызвать команду в меню.'
+            )
+            # обновляем секунды
+
+            await bot.edit_message_text(text=updated_text, chat_id=message.chat.id, message_id=sent_message.message_id,
+                                        )
+
+        await asyncio.sleep(1)
         await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+        await bot.delete_message(chat_id=message.chat.id, message_id=button_message.message_id)
 
     else:
         await message.answer("Чтобы общаться с админом, нужно сначала выслать карточку товара.")
