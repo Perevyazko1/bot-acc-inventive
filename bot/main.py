@@ -48,6 +48,9 @@ async def start(message: types.Message):
         "👤 Создатель: Андрей Перевязко\n\n"
         "📲 TG: @perevyazko1"
         )
+    photo_path = 'image.jpg'  # здесь нужно указать путь к вашему изображению в корне проекта
+    with open(photo_path, 'rb') as photo:
+        await bot.send_photo(message.chat.id, photo)
 
 
 # @dp.callback_query_handler(lambda c: c.data in ['restore', 'xiaomi', 'samsung'])
